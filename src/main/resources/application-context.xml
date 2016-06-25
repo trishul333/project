@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://springframework.org/schema/jdbc"
+	xmlns:ws="http://jax-ws.java.net/spring/core"
+    xmlns:wss="http://jax-ws.java.net/spring/servlet"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/spring-jdbc.xsd
+		http://jax-ws.java.net/spring/core http://jax-ws.java.net/spring/core.xsd
+        http://jax-ws.java.net/spring/servlet http://jax-ws.java.net/spring/servlet.xsd">
+
+    <context:property-placeholder location="classpath:database.properties"/>
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${persistence.driverClass}" />
+		<property name="url" value="${persistence.jdbcurl}" />
+		<property name="username" value="${persistence.dbuser}" />
+		<property name="password" value="${persistence.dbpass}" />
+	</bean>
+  <import resource="classpath:activemq-jms.xml"/>
+
+   <wss:binding url="/guest">
+        <wss:service>
+            <ws:service bean="#guestService"/>
+        </wss:service>
+    </wss:binding>
+<!-- Hibernate 3 Annotation SessionFactory Bean definition-->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="annotatedClasses">
+			<list>
+				<value>com.example.persistance.Guest</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.HSQLDialect</prop>
+				<prop key="hibernate.current_session_context_class">thread</prop>
+				<prop key="hibernate.show_sql">false</prop>
+				<prop key="hibernate.archive.autodetection">class,hbm</prop> 
+			</props>
+		</property>
+	</bean>
+	
+	<bean id="guestDAO" class="com.example.persistance.GuestDAOImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<bean id="guestService" class="com.example.service.GuestService">
+		<property name="guestDAO" ref="guestDAO" />
+		<property name="sender" ref="sender" />
+	</bean>
+	
+	<import resource="classpath:hsqldb.xml"/>
+	
+</beans>
